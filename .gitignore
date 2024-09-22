@@ -1,0 +1,3 @@
+myenv/
+# If myenv is in a subfolder
+/Speech_data/venv/

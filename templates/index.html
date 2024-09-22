@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 min-h-screen flex items-center justify-center">
+    <div class="bg-white shadow-2xl rounded-lg p-8 max-w-4xl w-full">
+        <h1 class="text-2xl font-bold text-center text-gray-700 mb-6">🎤 Audio Transcription</h1>
+        <div class="grid grid-cols-2 gap-8">
+            <div
+                class="flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-lg text-white shadow-lg">
+                <label for="audio-upload" class="text-lg font-semibold mb-4">Upload Audio (.wav only)</label>
+                <input id="audio-upload" type="file" accept=".wav"
+                    class="file-input mb-4 px-3 py-2 text-blue-800 bg-white border border-transparent rounded-lg shadow-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent">
+                <p class="text-sm">Only WAV files are supported.</p>
+            </div>
+            <div
+                class="flex flex-col items-center justify-center bg-gradient-to-r from-yellow-400 to-orange-500 p-6 rounded-lg shadow-lg">
+                <h2 class="text-lg font-semibold text-white mb-4">Transcribed Text</h2>
+                <div id="transcription-container"
+                    class="w-full h-40 p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                    
+                    <div id="loading-animation"
+                        class="hidden animate-spin border-t-4 border-yellow-500 rounded-full h-12 w-12"></div>
+                    <p id="transcription-text" class="text-center hidden text-black font-semibold">Transcription will
+                        appear here...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('audio-upload');
+        const transcriptionText = document.getElementById('transcription-text');
+        const loadingAnimation = document.getElementById('loading-animation');
+        fileInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'audio/wav') {
+                loadingAnimation.classList.remove('hidden');
+                transcriptionText.classList.add('hidden');
+                transcriptionText.textContent = '';
+                const formData = new FormData();
+                formData.append('audio', file);
+                fetch('/transcribe_text', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        console.log('Response:', response); 
+                        
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Data:', data); 
+                        loadingAnimation.classList.add('hidden');
+                        transcriptionText.textContent = data.text || 'No transcription available.';
+                        transcriptionText.classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        loadingAnimation.classList.add('hidden');
+                        transcriptionText.textContent = 'Error occurred during transcription.';
+                        transcriptionText.classList.remove('hidden');
+                        console.error('Error:', error);
+                    });
+
+            } else {
+                alert('Please upload a valid WAV file.');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
