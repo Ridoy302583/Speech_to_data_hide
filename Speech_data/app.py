@@ -40,33 +40,52 @@ def transcribe_and_redact():
         file_path = os.path.join('uploads', file.filename)
         file.save(file_path)
 
-        with sr.AudioFile(file_path) as source:
-            recognizer.adjust_for_ambient_noise(source, duration=1)
-            audio_data = recognizer.record(source)
+        # with sr.AudioFile(file_path) as source:
+        #     recognizer.adjust_for_ambient_noise(source, duration=1)
+        #     audio_data = recognizer.record(source)
 
         # Transcribe using Google Speech Recognition
         try:
-            text = recognizer.recognize_google(audio_data)
-            logging.info(f"Transcription successful: {text}")
+            # text = recognizer.recognize_google(audio_data)
+            # logging.info(f"Transcription successful: {text}")
 
+
+            # Initialize Groq client
+            client = Groq(api_key="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")
+
+            # Define the correct path to the audio file in the uploads folder
+            uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+            filename = os.path.join(uploads_dir, file.filename)
+
+            # Open the audio file from the uploads directory
+            with open(filename, "rb") as file:
+                transcription = client.audio.transcriptions.create(
+                    file=(filename, file.read()),
+                    model="whisper-large-v3",  # Using the specified model
+                    response_format="verbose_json"  # Return detailed transcription result
+                )
+
+            # Print the transcription text
+            print(transcription.text)
             # Redact personal information using the Groq LLM
-            client = Groq(api_key="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")
+            # client = Groq(api_key="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")
             completion = client.chat.completions.create(
                 model="llama-3.1-70b-versatile",
                 messages=[
                     {
                         "role": "system",
                         "content": """
-                        You are a Privacy Expert. Your task is to redact specific personal information from text data. Follow these guidelines:
-                        1. Hide any Name, Father's Name, and Mother's Name using `********`.
-                        2. If the text contains a mobile number, redact it by keeping the first three characters visible, followed by `*****`.
-                        3. Do not hide bank account numbers.
-                        4. Return the full modified text without revealing the redacted information.
+                        You are a Privacy Expert. Your task is to redact specific personal information from text data. That text data comes from Audio recording in two persons call records. You at first devide that two persons transcripts then correct grammartical errors and After Every sentence use `.` and if question then use `?` then if have text like number eight six seven you convert it into number format like 867 then hide personal information from that. Follow these guidelines:
+                        1. Hide Name, Father's Name, using `********`.
+                        2. If the text contains a mobile number that will be visible in number format like 7,6,8 instead of eight,seven, six etc. 
+                        3. Do not hide bank account numbers, Mobile numbers and Mothers name.
+                        4. After Every sentence use `.` and if question then use `?`
+                        5. Return the full modified text without revealing the redacted information.
                         """
                     },
                     {
                         "role": "user",
-                        "content": text,
+                        "content": transcription.text,
                     }
                 ],
                 temperature=0,
@@ -81,6 +100,7 @@ def transcribe_and_redact():
                 result += chunk.choices[0].delta.content or ""
                 # print(chunk.choices[0].delta.content or "", end="")
             # logging.info(f"Redacted text: {result}")
+            # markdown_result = f"```markdown\n{result}\n```"
             return jsonify({"text": result}), 200
 
         except sr.UnknownValueError:

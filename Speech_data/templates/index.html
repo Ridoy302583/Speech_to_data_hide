@@ -17,18 +17,14 @@
                     class="file-input mb-4 px-3 py-2 text-blue-800 bg-white border border-transparent rounded-lg shadow-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent">
                 <p class="text-sm">Only WAV files are supported.</p>
             </div>
-            <div
-                class="flex flex-col items-center justify-center bg-gradient-to-r from-yellow-400 to-orange-500 p-6 rounded-lg shadow-lg">
-                <h2 class="text-lg font-semibold text-white mb-4">Transcribed Text</h2>
-                <div id="transcription-container"
-                    class="w-full h-40 p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
-                    
-                    <div id="loading-animation"
-                        class="hidden animate-spin border-t-4 border-yellow-500 rounded-full h-12 w-12"></div>
-                    <p id="transcription-text" class="text-center hidden text-black font-semibold">Transcription will
-                        appear here...</p>
+            <div class="flex flex-col items-center justify-center bg-gradient-to-r from-yellow-400 to-orange-500 p-2 rounded-lg shadow-lg">
+                <div id="transcription-container" class="w-full h-40 p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 overflow-auto">
+                    <div id="loading-animation" class="hidden animate-spin border-t-4 border-yellow-500 rounded-full h-12 w-12"></div>
+                    <p id="transcription-text" class="text-center hidden text-black font-semibold text-xs mt-2 mb-2 whitespace-pre-wrap max-h-full">Transcription will appear here...</p>
                 </div>
             </div>
+            
+
 
         </div>
     </div>
@@ -57,7 +53,11 @@
                     .then(data => {
                         console.log('Data:', data); 
                         loadingAnimation.classList.add('hidden');
-                        transcriptionText.textContent = data.text || 'No transcription available.';
+                        let formattedText = data.text
+                            .replace(/([.?!])\s*(?=[A-Z])/g, '$1\n'); // Add a newline after each sentence-ending punctuation
+
+                        // Update the transcriptionText element with the formatted text
+                        transcriptionText.textContent = formattedText || 'No transcription available.';
                         transcriptionText.classList.remove('hidden');
                     })
                     .catch(error => {
